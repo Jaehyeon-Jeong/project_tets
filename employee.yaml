@@ -1,0 +1,114 @@
+############################################
+# 1) Flask Deployment
+############################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      containers:
+      - name: flask-container
+        image: jaehyeon0106/my-flask-app:latest  # Your Flask image
+        ports:
+          - containerPort: 5000
+
+---
+############################################
+# 2) Flask Service
+############################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  selector:
+    app: flask
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30001
+
+---
+############################################
+# 3) Postgres Deployment
+############################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres-container
+        image: postgres:13
+        ports:
+          - containerPort: 5432
+        env:
+          - name: POSTGRES_USER
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            value: postgres
+          - name: POSTGRES_DB
+            value: mydb
+
+---
+############################################
+# 4) Postgres Service
+############################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+# -----------------------------------------------------------
+# 5) (Optional) PersistentVolumeClaim for Postgres
+# -----------------------------------------------------------
+# Uncomment if you want data to persist across restarts:
+#
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: postgres-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+#
+# Then reference the PVC in the Postgres Deployment:
+# 
+# volumes:
+#   - name: postgres-storage
+#     persistentVolumeClaim:
+#       claimName: postgres-pvc
+# volumeMounts:
+#   - name: postgres-storage
+#     mountPath: /var/lib/postgresql/data
+#
+# (Add above volumeMounts + volumes to the postgres-container spec)

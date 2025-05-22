@@ -1,0 +1,7 @@
+Flask
+Flask-SQLAlchemy
+Flask-login
+Werkzeug
+psycopg2-binary
+pytest
+mypy
