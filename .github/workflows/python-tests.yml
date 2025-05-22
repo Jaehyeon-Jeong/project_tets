@@ -1,4 +1,4 @@
-name: Run Unit Tests and Deploy
+name: Run Unit Tests and Push Image
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,11 +41,11 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/shift-manager:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/shift-manager:latest
 
-      - name: Set up kubeconfig (for local or remote cluster)
+      - name: Set up kubeconfig (optional)
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > $HOME/.kube/config || echo "No kubeconfig provided"
 
-      - name: Deploy to Kubernetes
+      - name: Deploy to Kubernetes (only works with real cluster)
         run: |
-          kubectl apply -f employee.yaml
+          kubectl apply -f employee.yaml --validate=false || echo "Skipping deploy: not connected to cluster"
